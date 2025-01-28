@@ -1,0 +1,35 @@
+# Ignore OS generated files
+.DS_Store
+Thumbs.db
+
+# Ignore IDE files
+.idea/
+.vscode/
+
+# Ignore Python bytecode files
+*.pyc
+*.pyo
+__pycache__/
+
+# Ignore environment files
+.env
+.venv/
+venv/
+
+# Ignore log files
+*.log
+
+# Ignore package manager files
+node_modules/
+bower_components/
+
+# Ignore build directories
+/dist
+/build
+
+# Ignore compiled Java files
+*.class
+
+# Ignore system files
+*.bak
+*.swp

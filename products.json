@@ -1,0 +1,44 @@
+[
+  {
+    "id": 1,
+    "title": "Classic Perfume",
+    "description": "A timeless fragrance with hints of floral and woody notes.",
+    "image": "/images/perfume.jpg",
+    "alt": "camera"
+  },
+  {
+    "id": 2,
+    "title": "Wireless Headphones",
+    "description": "Experience superior sound quality with these wireless headphones.",
+    "image": "/images/headphones.jpg",
+    "alt": "Headphones"
+  },
+  {
+    "id": 3,
+    "title": "Smartwatch",
+    "description": "Stay connected and track your fitness with our latest smartwatch.",
+    "image": "/images/smartwatch.jpg",
+    "alt": "Smartwatch"
+  },
+  {
+    "id": 4,
+    "title": "Ultra-Thin Laptop",
+    "description": "Power and portability combined in our sleek laptop design.",
+    "image": "/images/laptop.jpg",
+    "alt": "Laptop"
+  },
+  {
+    "id": 5,
+    "title": "DSLR Camera",
+    "description": "Capture moments with stunning clarity and precision.",
+    "image": "/images/camera.jpg",
+    "alt": "Camera"
+  },
+  {
+    "id": 6,
+    "title": "Gaming Console",
+    "description": "Dive into an immersive gaming experience with the latest console.",
+    "image": "/images/gaming-console.jpg",
+    "alt": "Gaming Console"
+  }
+]
