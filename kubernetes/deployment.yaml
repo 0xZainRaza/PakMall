@@ -38,6 +38,7 @@ spec:
     spec:
       containers:
       - name: pakmall
+        image: pakmall
         ports:
         - containerPort: 4000
 
