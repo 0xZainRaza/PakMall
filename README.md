@@ -2,6 +2,9 @@
 
 PakMall is an e-commerce platform that connects buyers and sellers, providing a convenient online marketplace for various products ranging from electronics to fashion.
 
+![image](https://github.com/user-attachments/assets/650df23a-0f94-4e65-81be-96044f0bfb04)
+
+
 ## Technologies Used
 
 - **Front-end:** HTML, CSS, EJS (Embedded JavaScript)
