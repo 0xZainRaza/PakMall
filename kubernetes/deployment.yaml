@@ -38,8 +38,7 @@ spec:
     spec:
       containers:
       - name: pakmall
-        image: pakmall
-        imagePullPolicy: Never
+        image: 0xzainraza/pakmall:latest
         ports:
         - containerPort: 4000
 
