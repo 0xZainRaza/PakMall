@@ -34,7 +34,7 @@ jobs:
           command: |
             kubectl apply -f kubernetes/deployment.yaml
             kubectl apply -f kubernetes/service.yaml
-            # Add deployment commands here (e.g., AWS, Firebase, Heroku, etc.)
+            
 
 workflows:
   version: 2
