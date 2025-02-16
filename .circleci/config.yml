@@ -28,7 +28,7 @@ jobs:
           command: |
             echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
             docker build -t 0xzainraza/myapp:latest .
-            docker push mydockerhubuser/myapp:latest
+            docker push 0xzainraza/myapp:latest
       - run:
           name: Deploying the app
           command: |
