@@ -19,9 +19,16 @@ jobs:
 
   deploy:
     docker:
-      - image: node:18-alpine
+      - image: docker:latest
     steps:
       - checkout
+      - setup_remote_docker
+      - run:
+          name: Build and Push Docker Image
+          command: |
+            echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+            docker build -t 0xzainraza/myapp:latest .
+            docker push mydockerhubuser/myapp:latest
       - run:
           name: Deploying the app
           command: |
