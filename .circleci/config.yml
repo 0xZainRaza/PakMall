@@ -19,7 +19,7 @@ jobs:
 
   deploy:
     docker:
-      - image: docker:latest
+      - image: bitnami/kubectl:latest
     steps:
       - checkout
       - setup_remote_docker
@@ -30,9 +30,10 @@ jobs:
             docker build -t 0xzainraza/myapp:latest .
             docker push 0xzainraza/myapp:latest
       - run:
-          name: Deploying the app
+          name: Deploying to Kubernetes
           command: |
-            echo "Deploying to production..."
+            kubectl apply -f kubernetes/deployment.yaml
+            kubectl apply -f kubernetes/service.yaml
             # Add deployment commands here (e.g., AWS, Firebase, Heroku, etc.)
 
 workflows:
