@@ -1,25 +1,62 @@
 version: 2.1
 
+executors:
+  node-executor:
+    docker:
+      - image: node:18-alpine
+
+  docker-executor:
+    docker:
+      - image: docker:latest
+
 jobs:
 
   build:
-    docker:
-      - image: node:18-alpine
+    executor: node-executor
     steps:
       - checkout
       - run: npm install
 
   test:
-    docker:
-      - image: node:18-alpine
+    executor: node-executor
     steps:
       - checkout
       - run: npm install
-      - run: npm test
+      - run: npm test | tee test-results.txt
+      - store_artifacts:
+          path: test-results.txt  # Store test logs
+
+  sonar_scan:
+    executor: node-executor
+    steps:
+      - checkout
+      - run:
+          name: SonarQube Analysis
+          command: |
+            apk add --no-cache openjdk11
+            sonar-scanner \
+              -Dsonar.projectKey=my_project \
+              -Dsonar.sources=./ \
+              -Dsonar.host.url=$SONARQUBE_URL \
+              -Dsonar.login=$SONARQUBE_TOKEN
+
+  dependency_check:
+    executor: node-executor
+    steps:
+      - checkout
+      - run:
+          name: Run OWASP Dependency-Check
+          command: |
+            apk add --no-cache wget
+            mkdir -p reports
+            wget https://github.com/jeremylong/DependencyCheck/releases/latest/download/dependency-check-6.5.3-release.zip
+            unzip dependency-check-6.5.3-release.zip -d dependency-check
+            ./dependency-check/bin/dependency-check.sh --scan ./ --format HTML --out reports/dependency-report.html
+      - store_artifacts:
+          path: reports/dependency-report.html
 
   deploy:
-    docker:
-      - image: docker:latest
+    executor: docker-executor
     steps:
       - checkout
       - setup_remote_docker
@@ -29,11 +66,22 @@ jobs:
             echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
             docker build -t 0xzainraza/myapp:latest .
             docker push 0xzainraza/myapp:latest
+
+  send_email_reports:
+    executor: node-executor
+    steps:
+      - checkout
       - run:
-          name: Deploying the app
+          name: Send Reports via Email
           command: |
-            echo "Deploying to production..."
-            # Add deployment commands here (e.g., AWS, Firebase, Heroku, etc.)
+            apk add --no-cache msmtp
+            echo "Subject: CircleCI Reports
+            Please find the attached SonarQube, Dependency-Check, and Test reports." | \
+            msmtp --host=smtp.gmail.com --port=587 --auth=on \
+                  --user=$EMAIL_USER --passwordeval "echo $EMAIL_PASS" \
+                  -t K214755@gmail.com \
+                  -a reports/dependency-report.html \
+                  -a test-results.txt
 
 workflows:
   version: 2
@@ -43,6 +91,16 @@ workflows:
       - test:
           requires:
             - build
-      - deploy:
+      - sonar_scan:
           requires:
             - test
+      - dependency_check:
+          requires:
+            - test
+      - deploy:
+          requires:
+            - sonar_scan
+            - dependency_check
+      - send_email_reports:
+          requires:
+            - deploy
