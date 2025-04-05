@@ -67,20 +67,21 @@ jobs:
             docker push 0xzainraza/myapp:latest
 
   send_email_reports:
-    executor: node-executor
-    steps:
-      - checkout
-      - run:
-          name: Send Reports via Email
-          command: |
-            apk add --no-cache msmtp
-            echo "Subject: CircleCI Reports
-            Please find the attached SonarQube, Dependency-Check, and Test reports." | \
-            msmtp --host=smtp.gmail.com --port=587 --auth=on \
-                  --user=$EMAIL_USER --passwordeval "echo $EMAIL_PASS" \
-                  -t K214755@gmail.com \
-                  -a reports/dependency-report.html \
-                  -a test-results.txt
+  executor: node-executor
+  steps:
+    - checkout
+    - run:
+        name: Send Reports via Email
+        command: |
+          apk add --no-cache msmtp
+          echo "Subject: CircleCI Reports
+          Please find the attached SonarQube, Dependency-Check, and Test reports." | \
+          msmtp --host=smtp.gmail.com --port=587 --auth=on \
+                --user=$EMAIL_USER --passwordeval "echo $EMAIL_PASS" \
+                -t K214755@gmail.com \
+                -a "reports/dependency-report.html" \
+                -a "test-results.txt"
+
 
 workflows:
   ci_pipeline:
