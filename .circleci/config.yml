@@ -72,14 +72,16 @@ jobs:
       - run:
           name: Send Email with Attachments
           command: |
-            curl -X POST https://api.mailgun.net/v3/yourdomain.com/messages \
-            -F from="you@yourdomain.com" \
-            -F to="K214755@gmail.com" \
-            -F subject="CircleCI Reports" \
-            -F text="Please find the attached SonarQube, Dependency-Check, and Test reports." \
-            -F attachment=@test-results.txt \
-            -F attachment=@reports/dependency-report.html \
-            -u "api:$MAILGUN_API_KEY"
+            curl -s --user 'api:API_KEY' \
+              https://api.mailgun.net/v3/sandbox6588235e4ec84abea6e0142dcc3cc84e.mailgun.org/messages \
+              -F from='Mailgun Sandbox <postmaster@sandbox6588235e4ec84abea6e0142dcc3cc84e.mailgun.org>' \
+              -F to='Zain Ali Raza <k214755@nu.edu.pk>' \
+              -F subject='Hello Zain Ali Raza' \
+              -F text='Congratulations Zain Ali Raza, you just sent an email with Mailgun! You are truly awesome!' \
+              -F text="Please find the attached SonarQube, Dependency-Check, and Test reports." \
+              -F attachment=@test-results.txt \
+              -F attachment=@reports/dependency-report.html
+
 
 workflows:
   ci_pipeline:
