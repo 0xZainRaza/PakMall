@@ -7,7 +7,7 @@ executors:
   node-executor:
     docker:
       - image: node:18-alpine
-  docker-executor:  # Define the docker-executor
+  docker-executor:
     docker:
       - image: circleci/python:3.9  # Or any appropriate Docker image
 
@@ -69,13 +69,17 @@ jobs:
     executor: node-executor
     steps:
       - checkout
-      - email/send:
-          to: "K214755@gmail.com"
-          subject: "CircleCI Reports"
-          body: "Please find the attached SonarQube, Dependency-Check, and Test reports."
-          attachments:
-            - "test-results.txt"
-            - "reports/dependency-report.html"
+      - run:
+          name: Send Email with Attachments
+          command: |
+            curl -X POST https://api.mailgun.net/v3/yourdomain.com/messages \
+            -F from="you@yourdomain.com" \
+            -F to="K214755@gmail.com" \
+            -F subject="CircleCI Reports" \
+            -F text="Please find the attached SonarQube, Dependency-Check, and Test reports." \
+            -F attachment=@test-results.txt \
+            -F attachment=@reports/dependency-report.html \
+            -u "api:$MAILGUN_API_KEY"
 
 workflows:
   ci_pipeline:
