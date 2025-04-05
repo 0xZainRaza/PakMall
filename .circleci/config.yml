@@ -8,12 +8,7 @@ executors:
     docker:
       - image: node:18-alpine
 
-  docker-executor: 
-    docker:
-      - image: docker:latest
-
 jobs:
-
   build:
     executor: node-executor
     steps:
@@ -37,7 +32,6 @@ jobs:
           name: SonarQube Analysis
           command: |
             echo "Sonar Scanner"
-            
 
   dependency_check:
     executor: node-executor
@@ -55,7 +49,6 @@ jobs:
 
       - store_artifacts:
           path: reports/dependency-report.html
-
 
   deploy:
     executor: docker-executor
@@ -76,14 +69,11 @@ jobs:
       - email/send:
           to: "K214755@gmail.com"
           subject: "CircleCI Reports"
-          body: |
-            Please find the attached SonarQube, Dependency-Check, and Test reports.
+          body: "Please find the attached SonarQube, Dependency-Check, and Test reports."
           attachments:
-            - "reports/dependency-report.html"
             - "test-results.txt"
+            - "reports/dependency-report.html"
 
-  
-  
 workflows:
   ci_pipeline:
     jobs:
