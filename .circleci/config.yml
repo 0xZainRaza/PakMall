@@ -85,7 +85,6 @@ jobs:
                   -a test-results.txt
 
 workflows:
-  version: 2
   ci_pipeline:
     jobs:
       - build
