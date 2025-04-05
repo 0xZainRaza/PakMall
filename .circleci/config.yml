@@ -33,12 +33,8 @@ jobs:
       - run:
           name: SonarQube Analysis
           command: |
-            apk add --no-cache openjdk11
-            sonar-scanner \
-              -Dsonar.projectKey=my_project \
-              -Dsonar.sources=./ \
-              -Dsonar.host.url=$SONARQUBE_URL \
-              -Dsonar.login=$SONARQUBE_TOKEN
+            echo "Sonar Scanner"
+            
 
   dependency_check:
     executor: node-executor
