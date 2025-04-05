@@ -45,13 +45,14 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Run OWASP Dependency-Check
-          command: |
-            apk add --no-cache wget
-            mkdir -p reports
-            wget https://github.com/dependency-check/DependencyCheck/releases/download/v12.1.0/dependency-check-12.1.0-release.zip
-            unzip dependency-check-12.1.0-release.zip -d dependency-check
-            ./dependency-check/dependency-check/bin/dependency-check.sh --scan ./ --format HTML --out reports/dependency-report.html
+        name: Install Java and Dependency-Check
+        command: |
+          apk add --no-cache openjdk11 wget unzip
+          export JAVA_HOME=/usr/lib/jvm/java-11-openjdk
+          mkdir -p reports
+          wget https://github.com/dependency-check/DependencyCheck/releases/download/v12.1.0/dependency-check-12.1.0-release.zip
+          unzip dependency-check-12.1.0-release.zip -d dependency-check
+          ./dependency-check/dependency-check/bin/dependency-check.sh --scan ./ --format HTML --out reports/dependency-report.html
             
       - store_artifacts:
           path: reports/dependency-report.html
