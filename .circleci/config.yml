@@ -7,6 +7,9 @@ executors:
   node-executor:
     docker:
       - image: node:18-alpine
+  docker-executor:  # Define the docker-executor
+    docker:
+      - image: circleci/python:3.9  # Or any appropriate Docker image
 
 jobs:
   build:
