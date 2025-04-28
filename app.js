@@ -35,7 +35,7 @@ app.use('/api/products', productapirouter);
 
 // Start the server only if the script is run directly
 if (require.main === module) {
-  const PORT = process.env.PORT || 4000;
+  const PORT = process.env.PORT || 80;
   app.listen(PORT, () => console.log(`The server is listening on ${PORT}`));
 }
 
