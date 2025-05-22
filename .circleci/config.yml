@@ -44,7 +44,7 @@ jobs:
       - deploy:
           command: |
             if [ "${CIRCLE_BRANCH}" == "master" ]; then
-                docker login -u ${DOCKER_USER} -p ${DOCKER_PASS};
+                docker login -u ${DOCKERHUB_USER} -p ${DOCKERHUB_PASS};
                 echo ${DOCKER_USER}/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_TAG};
                 go install --ldflags '-extldflags "-static"' github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME};
                 mkdir bin;
@@ -61,4 +61,4 @@ workflows:
       - build:
           filters:
             branches:
-              only: master
+              only: main
