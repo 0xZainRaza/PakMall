@@ -1,105 +1,69 @@
-version: 2.1
-
-orbs:
-  email: cinotify/email@1.2.1
-
-executors:
-  node-executor:
-    docker:
-      - image: node:18-alpine
-  docker-executor:
-    docker:
-      - image: circleci/python:3.9  # Or any appropriate Docker image
-
+version: 2
 jobs:
   build:
-    executor: node-executor
-    steps:
-      - checkout
-      - run: npm install
-
-  test:
-    executor: node-executor
-    steps:
-      - checkout
-      - run: npm install
-      - run: npm test | tee test-results.txt
-      - store_artifacts:
-          path: test-results.txt  # Store test logs
-
-  sonar_scan:
-    executor: node-executor
-    steps:
-      - checkout
-      - run:
-          name: SonarQube Analysis
-          command: |
-            echo "Sonar Scanner"
-
-  dependency_check:
-    executor: node-executor
-    steps:
-      - checkout
-      - run:
-          name: Install Java and Dependency-Check
-          command: |
-            apk add --no-cache openjdk11 wget unzip
-            export JAVA_HOME=/usr/lib/jvm/java-11-openjdk
-            mkdir -p reports
-            wget https://github.com/dependency-check/DependencyCheck/releases/download/v12.1.1/dependency-check-12.1.1-release.zip
-            unzip dependency-check-12.1.1-release.zip -d dependency-check
-            ./dependency-check/dependency-check/bin/dependency-check.sh --scan ./ --format HTML --out reports/dependency-report.html --nvdApiKey $NVD_API_KEY
-
-      - store_artifacts:
-          path: reports/dependency-report.html
-
-  deploy:
-    executor: docker-executor
+    # Variable expansion in working_directory not supported at this time
+    # You will need to modify the code below to reflect your github account/repo setup
+    working_directory: /go/src/github.com/Securing-DevOps/invoicer-chapter3
+    docker:
+      - image: circleci/golang:1.8
+    environment:
+      GO15VENDOREXPERIMENT: 1
+    branches:
+      only:
+        - master
     steps:
       - checkout
       - setup_remote_docker
+
+      - run: echo 'export GOPATH_HEAD="$(echo ${GOPATH}|cut -d ':' -f 1)"' >> $BASH_ENV
+      - run: echo 'export GOPATH_BASE="${GOPATH_HEAD}/src/github.com/${CIRCLE_PROJECT_USERNAME}"' >> $BASH_ENV
+      - run: echo 'export DOCKER_REPO="$(if [ ${CIRCLE_PROJECT_USERNAME} == 'Securing-DevOps' ]; then echo securingdevops; else echo $DOCKER_USER; fi)"' >> $BASH_ENV
+      - run: mkdir -p "${GOPATH_BASE}"
+      - run: mkdir -p "${GOPATH_HEAD}/bin"
+      - run: go get github.com/govend/govend
+
       - run:
-          name: Build and Push Docker Image
+          name: Build application container
           command: |
-            echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-            docker build -t 0xzainraza/myapp:latest .
-            docker push 0xzainraza/myapp:latest
+            go install --ldflags '-extldflags "-static"' github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME};
+            [ ! -e bin ] && mkdir bin;
+            cp "${GOPATH_HEAD}/bin/${CIRCLE_PROJECT_REPONAME}" bin/invoicer;
+            docker build -t ${DOCKER_REPO}/${CIRCLE_PROJECT_REPONAME} .;
 
-  send_email_reports:
-    executor: node-executor
-    steps:
-      - checkout
       - run:
-          name: Send Email with Attachments
+          name: Run application in background
           command: |
-            curl -s --user 'api:API_KEY' \
-              https://api.mailgun.net/v3/sandbox6588235e4ec84abea6e0142dcc3cc84e.mailgun.org/messages \
-              -F from='Mailgun Sandbox <postmaster@sandbox6588235e4ec84abea6e0142dcc3cc84e.mailgun.org>' \
-              -F to='Zain Ali Raza <k214755@nu.edu.pk>' \
-              -F subject='Hello Zain Ali Raza' \
-              -F text='Congratulations Zain Ali Raza, you just sent an email with Mailgun! You are truly awesome!' \
-              -F text="Please find the attached SonarQube, Dependency-Check, and Test reports." \
-              -F attachment=@test-results.txt \
-              -F attachment=@reports/dependency-report.html
+            docker run ${DOCKER_REPO}/${CIRCLE_PROJECT_REPONAME}
+          background: true
 
+      - run:
+          name: ZAP baseline test of application
+          # Only fail on error code 1, which indicates at least one FAIL was found.
+          # error codes 2 & 3 indicate WARN or other, and should not break the run
+          command: |
+            (
+            docker pull owasp/zap2docker-weekly && \
+            docker run -t owasp/zap2docker-weekly zap-baseline.py \
+                -u https://raw.githubusercontent.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/master/zap-baseline.conf \
+                -t http://172.17.0.2:8080/ || \
+            if [ $? -ne 1 ]; then exit 0; else exit 1; fi;
+            )
 
-workflows:
-  ci_pipeline:
-    jobs:
-      - build
-      - test:
-          requires:
-            - build
-      - sonar_scan:
-          requires:
-            - test
-      - dependency_check:
-          requires:
-            - test
+      - run:
+          name: Test dependencies are up to date
+          command: 'GOPATH="${GOPATH_HEAD}"; ( cd ${GOPATH_BASE}/${CIRCLE_PROJECT_REPONAME} && govend -u --prune && git diff --quiet )'
+
       - deploy:
-          requires:
-            - sonar_scan
-            - dependency_check
-      - send_email_reports:
-          requires:
-            - deploy
+          # Push application container to dockerhub
+          command: |
+            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+                docker login -u ${DOCKERHUB_USERNAME} -p ${DOCKERHUB_PASSWORD};
+                echo ${DOCKER_USER}/${CIRCLE_PROJECT_REPONAME}:${CIRCLE_TAG};
+                go install --ldflags '-extldflags "-static"' github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME};
+                mkdir bin;
+                cp "$GOPATH_HEAD/bin/${CIRCLE_PROJECT_REPONAME}" bin/invoicer;
+                docker build -t ${DOCKER_REPO}/${CIRCLE_PROJECT_REPONAME} .;
+                docker images --no-trunc | awk '/^app/ {print $3}' | sudo tee $CIRCLE_ARTIFACTS/docker-image-shasum256.txt;
+                docker push ${DOCKER_REPO}/${CIRCLE_PROJECT_REPONAME};
+            fi
+            
